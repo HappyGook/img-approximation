@@ -33,11 +33,12 @@ def plot_image(image, iters):
     plt.show()
 
 if __name__=="__main__":
+    path = input("Enter the image path: ")
+    k = int(input("Enter the number of singular values to use for reconstruction: "))
     # Convert image to matrix
-    img = import_and_convert("input.jpg")
+    img = import_and_convert(path)
 
     # Compute the SVD and reconstruct the image from k vectors
-    k = 10
     reconstructed_img = reconstruct(img, k)
 
 
