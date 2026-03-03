@@ -4,30 +4,41 @@ import matplotlib.pyplot as plt
 
 def import_and_convert(path):
     # Open the image and convert it to grayscale
-    img = Image.open(path).convert("L")
-    return np.array(img)
+    image = Image.open(path).convert("L")
+    return np.array(image)
 
-def reconstruct(U, S, Vt, k):
-    reconstructed = np.zeros(shape=(int(U.shape[0]), int(Vt.shape[1])))
-    for i in range(k):
-        u_i = U[:, i]
-        v_i = Vt[i, :]
-        reconstructed += S[i] * np.outer(u_i, v_i)
+def reconstruct(array, iters):
+    u,s,vt = np.linalg.svd(array)
+    print(f"SVD dimensions: dim(u)={np.shape(u)}, dim(S)={np.shape(s)}, dim(V^T)={np.shape(vt)} ")
 
+    reconstructed = np.zeros(shape=(int(u.shape[0]), int(vt.shape[1])))
+
+    # Iteratively compute the approximation
+    # Not the fastest option, but more intuitive
+    for i in range(iters):
+        u_i = u[:, i]
+        v_i = vt[i, :]
+        reconstructed += s[i] * np.outer(u_i, v_i)
+        plot_image(reconstructed, i+1)
+        print(f"Rank {i+1} approximation computed. Used {i+1} singular values and {i+1} singular vectors. \n "
+              f"Total values used: {np.shape(u_i)[0]} + {np.shape(v_i)[0]} * {i+1} = {(np.shape(u_i)[0] + np.shape(v_i)[0] + 1) * (i+1)} \n"
+              f"Relative error: {np.linalg.norm(array - reconstructed) / np.linalg.norm(array):.4f}")
 
     return reconstructed
 
-# Convert image to matrix
-img_arr = import_and_convert("input.jpg")
+def plot_image(image, iters):
+    plt.imshow(image, cmap='gray')
+    plt.title(f"Image approximation of rank {iters}")
+    plt.annotate(f"Rank {iters}", xy=(0.5, 0.1), xycoords='axes fraction', fontsize=12, ha='center')
+    plt.show()
 
-# Compute the SVD
-U,S,Vt = np.linalg.svd(img_arr)
-print(f"SVD dimensions: dim(U)={np.shape(U)}, dim(S)={np.shape(S)}, dim(V^T)={np.shape(Vt)} ")
+if __name__=="__main__":
+    # Convert image to matrix
+    img = import_and_convert("input.jpg")
 
-k = 50
+    # Compute the SVD and reconstruct the image from k vectors
+    k = 10
+    reconstructed_img = reconstruct(img, k)
 
-print(reconstruct(U, S, Vt, k))
 
-plt.imshow(reconstruct(U, S, Vt, k), cmap='gray')
-plt.title(f"Image approximation of rank {k}")
-plt.show()
+
